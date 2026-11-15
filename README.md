@@ -60,7 +60,7 @@ decisões que só você toma.
    novo **após o primeiro push** (ele lê a pubkey do repo).
 8. **Dependências**: registre toda dep nova no inventário `Anon5T4R/local-deps`
    (`DEPENDENCIES.md`, regra no `WORKFLOW.md` do repo) e commite o `Cargo.lock`.
-9. **Primeira release**: `cargo xtask version 0.1.0` (se ainda não estiver), `git tag v0.1.0`,
+9. **Primeira release**: `cargo xtask version set 0.1.0` (se ainda não estiver), `git tag v0.1.0`,
    `git push origin v0.1.0`. O Actions builda e publica.
 
 ## Estrutura
