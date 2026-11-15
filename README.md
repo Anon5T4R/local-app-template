@@ -44,7 +44,11 @@ decisões que só você toma.
 5. **Identidade de empacotamento**: `apps/localapp/src/suite_entry.rs` (`APP`: id, nome, tagline,
    repo), `packaging/linux/<id>.desktop` + `<id>.metainfo.xml.in`, `packaging/arch/PKGBUILD`,
    `packaging/windows/<id>.wxs` (nome, fabricante, chaves de registro), URLs em `package.ps1`,
-   `nfpm.yaml`, `Cargo.toml` (`repository`).
+   `nfpm.yaml`, `Cargo.toml` (`repository`). Nota: `craft-update`'s `App::bundle_id()` devolve
+   `com.<id>.app` só para os ids que ele conhece (`localpaint`, `localphoto`) — os outros caem em
+   `ai.storyteller.<id>`. Os 10 apps convivem com isso porque instalam por MSI/pacman (o registro
+   de menu do "rodou fora do pacote" é a única rota que usa `bundle_id()`); decida se o app nascido
+   mantém `com.<id>.app` no `.desktop`/MSI (padrão da suíte) ou entra no match da crate.
 6. **Entrada no catálogo da suíte** (o passo que o template não pode fazer por você):
    1. No repo `Anon5T4R/local-libs` (`C:\Dev\underworld\local-libs`), adicione a entrada do app em
       `crates/update/src/suite.rs` (`pub const <APP>: App = .`) **e** à lista `SUITE` (ajuste o
