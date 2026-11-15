@@ -40,13 +40,15 @@ if ($Repo -notmatch '^[A-Za-z0-9._-]+$') { throw "Repo invalido: '$Repo' (so o n
 
 $IdUpper = ($Id.ToUpperInvariant() -replace '-', '')
 $Name_ = $Name.Trim()
-$replacements = [ordered]@{
-  'Anon5T4R/local-app-template' = "Anon5T4R/$Repo"
-  'com.localapp.app'            = "com.$Id.app"
-  'LOCALAPP'                    = $IdUpper
-  'Local App'                   = $Name_
-  'localapp'                    = $Id
-}
+# Ordered pairs (not a hashtable: PowerShell compares a hashtable's keys case-insensitively, and
+# LOCALAPP and localapp are two different replacements).
+$replacements = @(
+  @('Anon5T4R/local-app-template', "Anon5T4R/$Repo"),
+  @('com.localapp.app', "com.$Id.app"),
+  @('LOCALAPP', $IdUpper),
+  @('Local App', $Name_),
+  @('localapp', $Id)
+)
 
 # ---- 1. arquivos e pastas com o nome do molde ----------------------------------------------------
 function Rename-Path([string] $Relative, [string] $NewRelative) {
@@ -86,18 +88,21 @@ $textExtensions = @('.rs', '.toml', '.tsv', '.md', '.txt', '.yml', '.yaml', '.js
 $skip = @('libs', 'assets\craft-fonts', 'target', 'dist', 'tmp', '.git')
 $changed = New-Object System.Collections.Generic.List[string]
 
+# This script names the template on purpose (that is what it replaces), so it is left alone.
+$self = 'scripts/nascer-app.ps1'
 $files = Get-ChildItem -LiteralPath $Root -Recurse -File -Force | Where-Object {
-  $relative = $_.FullName.Substring($Root.Length + 1)
+  $relative = $_.FullName.Substring($Root.Length + 1).Replace('\', '/')
   $ext = $_.Extension.ToLowerInvariant()
   ($textExtensions -contains $ext) -and
-    -not ($skip | Where-Object { $relative -eq $_ -or $relative.StartsWith("$_\") })
+    $relative -ne $self -and
+    -not ($skip | Where-Object { $relative -eq $_ -or $relative.StartsWith("$_/") })
 }
 
 foreach ($file in $files) {
   $relative = $file.FullName.Substring($Root.Length + 1)
   $text = [System.IO.File]::ReadAllText($file.FullName, [System.Text.Encoding]::UTF8)
   $new = $text
-  foreach ($key in $replacements.Keys) { $new = $new.Replace($key, $replacements[$key]) }
+  foreach ($pair in $replacements) { $new = $new.Replace($pair[0], $pair[1]) }
 
   if ($file.Name -like '*.wxs') {
     # GUIDs novos, um por ocorrencia: UpgradeCode e cada Component identificam o produto instalado.
