@@ -1,0 +1,85 @@
+[workspace]
+resolver = "3"
+members = ["apps/localapp", "xtask"]
+exclude = ["libs"]
+default-members = ["apps/localapp", "xtask"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+rust-version = "1.95"
+repository = "https://github.com/Anon5T4R/local-app-template"
+
+[workspace.dependencies]
+# Vendored craft libs (libs/craft-libs). `crates/update` comes from the suite's single source,
+# Anon5T4R/local-libs: the copy here is a mirror, never edited in place.
+# Not wired while nothing uses them (an unused workspace dependency is a cargo warning):
+# `craft-ui` (widgets/icons/theme), `egui_extras` (tables/images/svg), `serde`/`serde_json` (the
+# app's own settings). Add the line back when the first crate needs it.
+craft-i18n = { path = "libs/craft-libs/crates/i18n/" }
+craft-update = { version = "=0.1.0", path = "libs/craft-libs/crates/update/", features = ["egui", "icons"] }
+craft-window = { path = "libs/craft-libs/crates/window/", features = ["egui"] }
+
+# foundation
+log = "0.4"
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+# ui
+# 0.37: `default_fonts` is no longer an egui default and the monochrome emoji faces moved behind
+# `monochrome_emoji_fonts`. Every resolution root (native, kittest, wasm) needs both.
+egui = { version = "0.37", default-features = false, features = ["default_fonts", "monochrome_emoji_fonts"] }
+eframe = { version = "0.37", default-features = false }
+# Native file dialogs: defaults on purpose (Linux gets the XDG portal through zbus, pure Rust;
+# never `default-features = false` - the mold is local-pdf, see the docs in `src/pickers.rs`).
+rfd = "0.17"
+pollster = "1"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+dbg_macro = "warn"
+todo = "warn"
+too_many_arguments = "allow"
+needless_range_loop = "allow"
+type_complexity = "allow"
+
+[profile.dev.package."*"]
+opt-level = 2
+debug = false
+
+[profile.dev]
+opt-level = 1
+debug = "line-tables-only"
+
+[profile.release]
+debug = "line-tables-only"
+
+[profile.dist]
+inherits = "release"
+lto = "thin"
+codegen-units = 1
+debug = false
+
+# The egui family and winit are vendored forks under libs/ (path sources: egui
+# 6d518fc799681571963842f95b55a6b68431b15a, winit a517b3846ee8457d84ee4975110bfda6797c44dc).
+# rustls-rustcrypto is the suite's fork (libs/rustls-rustcrypto) that the vendored craft-update
+# pins: the upstream alpha still pulls rustls-webpki 0.102 for `alg_id` alone.
+[patch.crates-io]
+ecolor = { path = "libs/egui/crates/ecolor/" }
+emath = { path = "libs/egui/crates/emath/" }
+epaint = { path = "libs/egui/crates/epaint/" }
+epaint_default_fonts = { path = "libs/egui/crates/epaint_default_fonts/" }
+egui = { path = "libs/egui/crates/egui/" }
+egui-winit = { path = "libs/egui/crates/egui-winit/" }
+egui-wgpu = { path = "libs/egui/crates/egui-wgpu/" }
+egui_glow = { path = "libs/egui/crates/egui_glow/" }
+egui_extras = { path = "libs/egui/crates/egui_extras/" }
+egui_kittest = { path = "libs/egui/crates/egui_kittest/" }
+egui_system_font_provider = { path = "libs/egui/crates/egui_system_font_provider/" }
+eframe = { path = "libs/egui/crates/eframe/" }
+egui_demo_lib = { path = "libs/egui/crates/egui_demo_lib/" }
+egui_inspection = { path = "libs/egui/crates/egui_inspection/" }
+winit = { path = "libs/winit/" }
+rustls-rustcrypto = { path = "libs/rustls-rustcrypto" }

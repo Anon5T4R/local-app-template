@@ -1,0 +1,42 @@
+# shellcheck shell=bash
+# Font setup for local packaging; sourced after packaging/env.sh.
+#
+# The app embeds a craft-fonts checkout as its CJK/Arabic/Hebrew/Devanagari faces (see
+# `apps/localapp/src/fonts.rs`). Releases must build with it: `CRAFT_FONTS_REQUIRED=1` below makes
+# a missing face a build error instead of a release whose Japanese menus are boxes.
+prepare_fonts() {
+  # This repository vendors craft-fonts at assets/craft-fonts (the CI and release builds pass it
+  # as CRAFT_FONTS_DIR); a sibling ../craft-fonts checkout still wins when it is the only one, and
+  # a missing one is cloned at the pinned revision below.
+  local vendored="$ROOT/assets/craft-fonts"
+  local font_dir="${CRAFT_FONTS_DIR:-}"
+  if [[ -z "$font_dir" ]]; then
+    if [[ -f "$vendored/fonts/manifest.txt" ]]; then font_dir="$vendored"; else font_dir="$ROOT/../craft-fonts"; fi
+  fi
+  # Relative overrides are documented relative to the workspace, regardless of the caller's cwd.
+  case "$font_dir" in
+    /*) ;;
+    *) font_dir="$ROOT/$font_dir" ;;
+  esac
+
+  if [[ -z "${CRAFT_FONTS_DIR:-}" ]] && [[ ! -e "$font_dir" ]]; then
+    # Same revision as release.yml. Never update or reset an existing checkout.
+    local revision=b076417b5880bd4154bd22f00695b1d28c6bea83
+    echo "==> downloading craft-fonts ($revision) to $font_dir"
+    if ! git clone --no-checkout https://github.com/storytold/craft-fonts "$font_dir" ||
+       ! git -C "$font_dir" checkout --detach "$revision"; then
+      echo "error: could not prepare craft-fonts; provide a complete checkout with CRAFT_FONTS_DIR" >&2
+      return 1
+    fi
+  fi
+
+  if [[ ! -f "$font_dir/fonts/manifest.txt" ]]; then
+    echo "error: missing $font_dir/fonts/manifest.txt; set CRAFT_FONTS_DIR to a complete craft-fonts checkout" >&2
+    return 1
+  fi
+  CRAFT_FONTS_DIR="$(cd "$font_dir" && pwd)" || return 1
+  export CRAFT_FONTS_DIR
+  # Fail the build if the required faces are missing, rather than ship empty glyph boxes.
+  export CRAFT_FONTS_REQUIRED=1
+  echo "==> embedding fonts from $CRAFT_FONTS_DIR"
+}

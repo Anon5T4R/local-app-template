@@ -1,0 +1,34 @@
+# Português (Brasil) (pt-br) interface catalog for Local App.
+# Columns, separated by a TAB:  context <TAB> English source text <TAB> translation
+#   context  usually empty. `@plural`, `@id` and `@msg` mean something to the apps; any other
+#            word is a label that tells apart two meanings of the same English.
+#   escapes  \n  \t  \\  inside a column. `{name}` placeholders must appear in both columns (in any
+#            order), and a trailing "." in one needs one in the other.
+#   @plural  English `one|other`; the translation lists this language's plural forms, `|`-separated.
+#   Lines starting with # and blank lines are ignored. A missing entry shows in English.
+#
+# Clean room: every entry was written from the plain meaning of the English text in ordinary
+# computing vocabulary. No other product's localisation or translated UI was consulted; write new
+# entries the same way.
+
+@id	language.name	Português (Brasil)
+	File	Arquivo
+	Open a file.	Abrir um arquivo.
+	Choose a folder.	Escolher uma pasta.
+	Quit Local App	Sair do Local App
+	Help	Ajuda
+	Check for Updates.	Verificar atualizações.
+	About Local App	Sobre o Local App
+	Local App	Local App
+	This is the Local suite's desktop template: a window, a menu bar, an About window with an update check, translated interface, native file pickers and the craft-fonts faces. Replace this page with your app.	Este é o template de app desktop da suíte Local: uma janela, uma barra de menus, uma janela Sobre com verificação de atualizações, interface traduzida, seletores nativos de arquivo e as fontes do craft-fonts. Substitua esta página pelo seu app.
+	picked: {path}	escolhido: {path}
+	nothing picked yet	nada escolhido ainda
+	Language	Idioma
+	(following the system)	(seguindo o sistema)
+	version {version}	versão {version}
+	You are on the newest version.	Você está na versão mais recente.
+	checking for updates failed: {reason}	falha ao verificar atualizações: {reason}
+	Text files	Arquivos de texto
+	Minimize	Minimizar
+	Maximize	Maximizar
+	Close	Fechar

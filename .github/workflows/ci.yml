@@ -1,0 +1,126 @@
+name: CI
+
+# Qualidade em todo push para main e todo PR: fmt, clippy, build --locked e testes.
+# Autossuficiente: não depende de workflows de outra organização.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Check (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Dependências de build (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          ok=0
+          for try in 1 2 3 4 5; do
+            sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && ok=1 && break
+            echo "apt: tentativa $try falhou — repetindo em 20s (blip de mirror do runner)"
+            sleep 20
+          done
+          [ "$ok" = 1 ]
+          ok=0
+          for try in 1 2 3 4 5; do
+            sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y libxkbcommon-dev libwayland-dev libx11-dev libxcb1-dev \
+              libxcursor-dev libxrandr-dev libxi-dev libfontconfig1-dev libfreetype-dev libgl1-mesa-dev libdbus-1-dev \
+              mesa-vulkan-drivers pkg-config fonts-dejavu-core && ok=1 && break
+            echo "apt: tentativa $try falhou — repetindo em 20s (blip de mirror do runner)"
+            sleep 20
+          done
+          [ "$ok" = 1 ]
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Fontes CJK vendored
+        shell: bash
+        run: echo "CRAFT_FONTS_DIR=$GITHUB_WORKSPACE/assets/craft-fonts" >> "$GITHUB_ENV"
+      - name: Formatação (só os membros do workspace — libs/ e assets/craft-fonts mantêm o estilo de origem)
+        shell: bash
+        run: cargo xtask fmt
+      - name: Clippy
+        run: cargo clippy --locked --workspace --all-targets --keep-going -- -D warnings
+      - name: Build --locked
+        run: cargo build --locked
+      - name: Gates do repositório (assets, camadas)
+        run: |
+          cargo xtask assets
+          cargo xtask layers
+      - name: Testes (Linux)
+        if: runner.os == 'Linux'
+        run: cargo test --locked
+      # A janela não abre no runner (sem GPU); o target compila, e o ícone/VERSIONINFO é obrigatório
+      # no release, então aqui ele é obrigatório também.
+      - name: Testes compilam (Windows)
+        if: runner.os == 'Windows'
+        env:
+          LOCALAPP_REQUIRE_WINRES: 1
+        run: cargo test --locked --no-run
+
+  arch:
+    name: Arch Linux (makepkg)
+    runs-on: ubuntu-24.04
+    container:
+      image: archlinux:base-devel
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Dependências
+        run: |
+          pacman -Syu --noconfirm rust clang lld
+      - name: Build --locked
+        run: cargo build --locked
+      - name: PKGBUILD válido (makepkg --printsrcinfo)
+        run: |
+          useradd -m builder
+          chown -R builder:builder packaging/arch
+          cd packaging/arch
+          sudo -u builder makepkg --printsrcinfo > /dev/null
+          echo "PKGBUILD parseia e gera .SRCINFO"
+
+  git-sources:
+    name: Sem dependências git remotas
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Cargo.lock (raiz e craft-libs vendored) não pode ter fontes git+
+        run: |
+          set -euo pipefail
+          test -f Cargo.lock || { echo "Cargo.lock is missing"; exit 1; }
+          cargo metadata --locked --format-version 1 > /dev/null
+          python3 - <<'PY'
+          import sys, tomllib
+          from pathlib import Path
+          bad = set()
+          for path in ("Cargo.lock", "libs/craft-libs/Cargo.lock"):
+              if not Path(path).is_file():
+                  continue
+              lock = tomllib.load(open(path, "rb"))
+              bad |= {f"{path}: {p['source']}" for p in lock.get("package", [])
+                      if p.get("source", "").startswith("git+")}
+          if bad:
+              print("Dependências git encontradas (proibido):", *sorted(bad), sep="\n")
+              sys.exit(1)
+          PY

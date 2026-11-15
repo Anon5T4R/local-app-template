@@ -1,0 +1,181 @@
+name: Release
+
+# Tag vX.Y.Z -> builda Windows (MSI + portable) e Linux (AppImage, deb, rpm, tar.gz),
+# empacota o Arch a partir do tarball e publica tudo na GitHub Release da tag.
+#
+# O TEMPLATE não tem release: um app nascido herda este workflow e passa a taguear. Antes da
+# primeira tag, rode `cargo xtask version X.Y.Z` e `minisign-nascimento.ps1` (README.md).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Fontes vendored
+        run: 'echo "CRAFT_FONTS_DIR=$env:GITHUB_WORKSPACE\assets\craft-fonts" >> $env:GITHUB_ENV'
+      - name: WiX Toolset
+        run: dotnet tool install --global wix --version 5.0.2
+      - name: Extensões WiX (UI + Util, pinadas - o MSI usa WixUI_Minimal e a Util)
+        run: wix extension add -g WixToolset.UI.wixext/5.0.2 WixToolset.Util.wixext/5.0.2
+      - name: Build e pacote
+        run: powershell -ExecutionPolicy Bypass -File packaging/windows/package.ps1
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: dist/release/*
+
+  linux:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Fontes vendored
+        run: echo "CRAFT_FONTS_DIR=$GITHUB_WORKSPACE/assets/craft-fonts" >> "$GITHUB_ENV"
+      - name: Dependências de empacotamento
+        run: |
+          ok=0
+          for try in 1 2 3 4 5; do
+            sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && ok=1 && break
+            echo "apt: tentativa $try falhou — repetindo em 20s (blip de mirror do runner)"
+            sleep 20
+          done
+          [ "$ok" = 1 ]
+          ok=0
+          for try in 1 2 3 4 5; do
+            sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y libxcb1-dev libxrandr-dev libxi-dev libxcursor-dev \
+              libxkbcommon-dev ninja-build && ok=1 && break
+            echo "apt: tentativa $try falhou — repetindo em 20s (blip de mirror do runner)"
+            sleep 20
+          done
+          [ "$ok" = 1 ]
+          curl -sSfL https://github.com/goreleaser/nfpm/releases/download/v2.48.0/nfpm_2.48.0_amd64.deb -o /tmp/nfpm.deb
+          sudo dpkg -i /tmp/nfpm.deb
+      - name: Build e pacote
+        run: packaging/linux/package.sh --formats "appimage deb rpm tar"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: linux
+          path: dist/release/*
+
+  arch:
+    needs: linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container: archlinux:base
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: linux
+          path: dist/release
+      - name: Pacote Arch (makepkg a partir do tarball da release)
+        run: |
+          set -euo pipefail
+          # makepkg recusa root: usuário sem privilégio constrói; fakeroot
+          # normaliza a posse dos arquivos do pacote.
+          pacman -Sy --noconfirm fakeroot >/dev/null
+          useradd -m builder
+          version=$(grep -m1 '^version = ' Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
+          work=$(mktemp -d)
+          cp packaging/arch/PKGBUILD "$work/"
+          cp "dist/release/localapp-$version-linux-x86_64.tar.gz" "$work/localapp-$version-linux-x86_64.tar.gz"
+          # Fonte local (a URL da release ainda não existe neste ponto do pipeline) + checksum REAL
+          # do artefato em vez de SKIP; o pkgver é carimbado do Cargo.toml (PKGBUILD esquecido no
+          # bump já derrubou release duas vezes).
+          sha=$(sha256sum "$work/localapp-$version-linux-x86_64.tar.gz" | cut -d' ' -f1)
+          sed -i "s|^pkgver=.*|pkgver=$version|; s|^source=.*|source=(\"localapp-\$pkgver-linux-x86_64.tar.gz\")|; s|^sha256sums=.*|sha256sums=('$sha')|" "$work/PKGBUILD"
+          chown -R builder "$work"
+          cd "$work"
+          su builder -c 'makepkg --noconfirm --noprogressbar -d'
+          # Asset no padrao da suite (<id>-<ver>-linux-<arch>): o pacman instala pelo .PKGINFO
+          # interno (pkgname=com.localapp.app), o nome do arquivo e so o contrato do updater.
+          mv com.localapp.app-$version-*.pkg.tar.zst "localapp-$version-linux-x86_64.pkg.tar.zst"
+          mv "localapp-$version-linux-x86_64.pkg.tar.zst" "$GITHUB_WORKSPACE/"
+          ls -lh "$GITHUB_WORKSPACE"/*.pkg.tar.zst
+      - uses: actions/upload-artifact@v7
+        with:
+          name: arch
+          path: '*.pkg.tar.zst'
+          if-no-files-found: error
+
+  publish:
+    needs: [windows, linux, arch]
+    runs-on: ubuntu-24.04
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+      - name: Checksums
+        run: |
+          set -euo pipefail
+          cd dist
+          find . -type f ! -name 'SHA256SUMS.txt' -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+      - name: Assina os assets (minisign)
+        run: |
+          set -euo pipefail
+          # Política transitória: falha de assinatura NUNCA trava a release —
+          # pula com aviso e a release sai sem .minisig (auditável na release).
+          if [ -z "${MINISIGN_KEY:-}" ] || [ -z "${MINISIGN_PASSPHRASE:-}" ]; then
+            echo "::warning::MINISIGN_KEY/MINISIGN_PASSPHRASE ausentes — release publicada SEM assinatura"
+            exit 0
+          fi
+          if ! sudo apt-get -o Acquire::Retries=5 install -y minisign >/dev/null 2>&1; then
+            echo "::warning::apt não instalou minisign — release publicada SEM assinatura"
+            exit 0
+          fi
+          key="$RUNNER_TEMP/minisign-suite.key"
+          printf '%s' "$MINISIGN_KEY" > "$key"
+          chmod 600 "$key"
+          cd dist
+          files=$(find windows linux arch -type f ! -name '*.minisig' | sort)
+          while IFS= read -r f; do
+            printf '%s\n' "$MINISIGN_PASSPHRASE" |
+              minisign -HSm "$f" -s "$key" -x "$f.minisig" -t "Anon5T4R suite ${GITHUB_REF_NAME}" ||
+              { echo "::warning::falha ao assinar $f — release SEM assinatura"; find windows linux arch -name '*.minisig' -delete; exit 0; }
+            # Auto-verificação contra a pubkey commitada: garante que a chave dos
+            # secrets bate com o molde que o updater embute (nunca publica sig inútil).
+            if ! minisign -Vm "$f" -p "$GITHUB_WORKSPACE/packaging/minisign.pub" -x "$f.minisig" >/dev/null 2>&1; then
+              echo "::warning::chave dos secrets NÃO bate com packaging/minisign.pub — release SEM assinatura"
+              find windows linux arch -name '*.minisig' -delete
+              exit 0
+            fi
+          done <<< "$files"
+          rm -f "$key"
+        env:
+          MINISIGN_KEY: ${{ secrets.MINISIGN_KEY }}
+          MINISIGN_PASSPHRASE: ${{ secrets.MINISIGN_PASSPHRASE }}
+      - name: Publica a release (idempotente)
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          files=(dist/windows/* dist/linux/* dist/arch/* dist/SHA256SUMS.txt)
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" "${files[@]}" --clobber
+          else
+            gh release create "$tag" "${files[@]}" \
+              --title "Local App ${tag}" --generate-notes
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}

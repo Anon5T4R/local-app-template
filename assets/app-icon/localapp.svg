@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PLACEHOLDER icon of the template. It is deliberately not a brand: a neutral grey tile with a
+  question mark, so nobody mistakes a born app's icon for finished work. See README.md beside this
+  file and `packaging/icons.sh`.
+
+  Full-bleed 512 tile (rx = 100), the frame Windows and Linux use as is.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="100" fill="#6B7280"/>
+  <path d="M 180 196 C 180 120, 332 120, 332 200 C 332 258, 260 268, 260 318"
+        fill="none" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="260" cy="376" r="26" fill="#FFFFFF"/>
+</svg>

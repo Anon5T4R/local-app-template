@@ -1,0 +1,3 @@
+# Custom runner labels actionlint can't know about. A born app adds its own.
+self-hosted-runner:
+  labels: []

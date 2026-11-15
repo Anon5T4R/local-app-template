@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Local App
+GenericName=Desktop Application Template
+Comment=The Local suite's desktop template: window, About window with update check, translated interface
+Exec=localapp %F
+Icon=com.localapp.app
+Terminal=false
+Categories=Utility;
+Keywords=template;local;app;
+StartupWMClass=com.localapp.app
