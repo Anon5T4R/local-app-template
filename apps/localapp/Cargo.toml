@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 repository.workspace = true
-publish = false
+publish.workspace = true
 description = "Local App - the Local suite's desktop template (egui): window, About, update check, i18n, pickers"
 default-run = "localapp"
 
@@ -13,6 +13,7 @@ default-run = "localapp"
 workspace = true
 
 [dependencies]
+craft-desktop-theme = { workspace = true }
 craft-i18n = { workspace = true }
 craft-update = { workspace = true }
 craft-window = { workspace = true }

@@ -9,6 +9,9 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.95"
+# Nada da suíte vai ao crates.io: dependência `path` sem versão numa crate publicável reprova o
+# `cargo-deny` (wildcards). Cada membro herda com `publish.workspace = true`.
+publish = false
 repository = "https://github.com/Anon5T4R/local-app-template"
 
 [workspace.dependencies]
@@ -18,6 +21,9 @@ repository = "https://github.com/Anon5T4R/local-app-template"
 # `craft-ui` (widgets/icons/theme), `egui_extras` (tables/images/svg), `serde`/`serde_json` (the
 # app's own settings). Add the line back when the first crate needs it.
 craft-i18n = { path = "libs/craft-libs/crates/i18n/" }
+# Linux: the desktop's light/dark choice reaches `ctx.system_theme()` (winit reports none there);
+# source of truth in local-libs, vendored here and replicated by its sync.ps1.
+craft-desktop-theme = { path = "libs/craft-libs/crates/desktop-theme/" }
 craft-update = { version = "=0.1.0", path = "libs/craft-libs/crates/update/", features = ["egui", "icons"] }
 craft-window = { path = "libs/craft-libs/crates/window/", features = ["egui"] }
 

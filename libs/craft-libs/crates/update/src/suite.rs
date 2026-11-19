@@ -6,20 +6,26 @@
 use crate::app::App;
 
 pub const PHOTOCRAFT: App = App::new("photocraft", "PhotoCraft", "Image editing", "storytold/photocraft");
-pub const LOCALIMAGE: App =
-    App { publisher: "LocalImage contributors", ..App::new("local-image", "Local Image", "Image viewer", "Anon5T4R/Local-Image") };
+pub const LOCALIMAGE: App = App {
+    publisher: "LocalImage contributors",
+    icon_png: Some(include_bytes!("../assets/icons/local-image.png")),
+    ..App::new("local-image", "Local Image", "Image viewer", "Anon5T4R/Local-Image")
+};
 pub const LOCALPAINT: App = App {
     former_names: &["LocalPaint"],
     publisher: "Local Paint contributors",
+    icon_png: Some(include_bytes!("../assets/icons/localpaint.png")),
     ..App::new("localpaint", "Local Paint", "Image editing", "Anon5T4R/Local-Paint")
 };
 pub const LOCALPHOTO: App = App {
     publisher: "Local Photo contributors",
+    icon_png: Some(include_bytes!("../assets/icons/localphoto.png")),
     ..App::new("localphoto", "Local Photo", "Photo library and raw development", "Anon5T4R/Local-Photo")
 };
 pub const LOCALVECTOR: App = App {
     former_names: &["LocalVector"],
     publisher: "Local Vector contributors",
+    icon_png: Some(include_bytes!("../assets/icons/localvector.png")),
     ..App::new("localvector", "Local Vector", "Vector illustration", "Anon5T4R/Local-Vector")
 };
 pub const VECTORCRAFT: App = App::new("vectorcraft", "VectorCraft", "Vector illustration", "storytold/vectorcraft");
@@ -33,6 +39,8 @@ pub const PDFCRAFT: App = App {
 pub const LOCALPDF: App = App {
     former_ids: &["printcraft"],
     former_names: &["PrintCraft", "LocalPDF"],
+    publisher: "Local PDF contributors",
+    icon_png: Some(include_bytes!("../assets/icons/localpdf.png")),
     ..App::new("localpdf", "Local PDF", "Reading, organizing and protecting PDFs", "Anon5T4R/local-pdf")
 };
 pub const EFFECTCRAFT: App = App::new("effectcraft", "EffectCraft", "Motion graphics and visual effects", "storytold/effectcraft");
@@ -43,6 +51,7 @@ pub const LOCALOFFICE: App = App {
     former_ids: &["wordcraft"],
     former_names: &["WordCraft", "LocalOffice"],
     publisher: "Local Word contributors",
+    icon_png: Some(include_bytes!("../assets/icons/localoffice.png")),
     ..App::new("localoffice", "Local Word", "Writing and document design", "Anon5T4R/local-office")
 };
 pub const SOUNDCRAFT: App = App::new("soundcraft", "SoundCraft", "Recording, editing and mixing audio", "storytold/soundcraft");
@@ -50,16 +59,43 @@ pub const DECKCRAFT: App = App::new("deckcraft", "DeckCraft", "Presentations and
 pub const LOCALSLIDES: App = App {
     developer: "Local Slides contributors",
     publisher: "Local Slides contributors",
+    icon_png: Some(include_bytes!("../assets/icons/localslides.png")),
     ..App::new("localslides", "Local Slides", "Slide decks and presentations", "Anon5T4R/local-slides")
 };
-pub const LOCALSHEETS: App =
-    App { developer: "Anon5T4R", publisher: "Anon5T4R", ..App::new("localsheets", "Local Sheets", "Spreadsheets and data", "Anon5T4R/local-sheets") };
-pub const LOCALKEYS: App =
-    App { publisher: "LocalKeys contributors", ..App::new("local-keys", "Local Keys", "Password manager", "Anon5T4R/Local-Keys") };
-pub const LOCALUTILS: App =
-    App { publisher: "Local Utils contributors", ..App::new("local-utils", "Local Utils", "Everyday utilities", "Anon5T4R/Local-Utils") };
-pub const LOCALPLAYER: App =
-    App { publisher: "LocalPlayer contributors", ..App::new("local-player", "Local Player", "Media player", "Anon5T4R/Local-Player-RS") };
+pub const LOCALSHEETS: App = App {
+    developer: "Anon5T4R",
+    publisher: "Anon5T4R",
+    icon_png: Some(include_bytes!("../assets/icons/localsheets.png")),
+    ..App::new("localsheets", "Local Sheets", "Spreadsheets and data", "Anon5T4R/local-sheets")
+};
+pub const LOCALKEYS: App = App {
+    publisher: "LocalKeys contributors",
+    icon_png: Some(include_bytes!("../assets/icons/local-keys.png")),
+    ..App::new("local-keys", "Local Keys", "Password manager", "Anon5T4R/Local-Keys")
+};
+pub const LOCALUTILS: App = App {
+    publisher: "Local Utils contributors",
+    icon_png: Some(include_bytes!("../assets/icons/local-utils.png")),
+    ..App::new("local-utils", "Local Utils", "Everyday utilities", "Anon5T4R/Local-Utils")
+};
+/// Local Player (the player app; "RS" is the fork's old name, the binary keeps `local-player-rs`).
+pub const LOCALPLAYER: App = App {
+    former_ids: &["local-player-rs"],
+    former_names: &["Local Player RS"],
+    publisher: "Local Player RS contributors",
+    icon_png: Some(include_bytes!("../assets/icons/local-player.png")),
+    ..App::new("local-player", "Local Player", "Media player", "Anon5T4R/Local-Player")
+};
+pub const LOCALOBSIDIAN: App = App {
+    publisher: "Local Obsidian contributors",
+    icon_png: Some(include_bytes!("../assets/icons/localobsidian.png")),
+    ..App::new("localobsidian", "Local Obsidian", "Notes, wikilinks and attachments", "Anon5T4R/Local-Obsidian")
+};
+pub const LOCALMIND: App = App {
+    publisher: "Local Mind contributors",
+    icon_png: Some(include_bytes!("../assets/icons/localmind.png")),
+    ..App::new("localmind", "Local Mind", "Mind maps with a balanced layout", "Anon5T4R/Local-Mind")
+};
 pub const CADCRAFT: App = App::new("cadcraft", "CADCraft", "Computer-aided design and drafting", "storytold/cadcraft");
 pub const GRIDCRAFT: App = App::new("gridcraft", "GridCraft", "Spreadsheets and data", "storytold/gridcraft");
 
@@ -69,7 +105,7 @@ pub const GRIDCRAFT: App = App::new("gridcraft", "GridCraft", "Spreadsheets and 
 pub const LAUNCHER: App = App::new("artcraft-launcher", "ArtCraft Launcher", "Installs and updates the Craft App Suite", "storytold/craft-launcher");
 
 /// The Craft App Suite, in getartcraft.com's display order.
-pub const SUITE: [App; 24] = [
+pub const SUITE: [App; 26] = [
     PHOTOCRAFT,
     LOCALIMAGE,
     LOCALPAINT,
@@ -92,6 +128,8 @@ pub const SUITE: [App; 24] = [
     LOCALKEYS,
     LOCALUTILS,
     LOCALPLAYER,
+    LOCALOBSIDIAN,
+    LOCALMIND,
     CADCRAFT,
     GRIDCRAFT,
 ];
@@ -111,6 +149,17 @@ mod tests {
         ids.sort_unstable();
         ids.dedup();
         assert_eq!(ids.len(), SUITE.len());
+    }
+
+    /// Local Player kept its filename (`local-player-rs`) and its pre-rename display name as former
+    /// names, so a copy installed before the rename is still recognised (and upgraded in place).
+    #[test]
+    fn the_player_carries_its_old_name_and_binary() {
+        let player = by_id("local-player").expect("the player is in the suite");
+        assert_eq!((player.name, player.repo), ("Local Player", "Anon5T4R/Local-Player"));
+        assert_eq!(player.publisher, "Local Player RS contributors", "the MSI's Manufacturer");
+        assert!(player.names().any(|name| name == "Local Player RS"));
+        assert!(player.stems().any(|stem| stem == "local-player-rs"));
     }
 
     #[test]
@@ -140,6 +189,11 @@ mod tests {
         assert_eq!(by_id("local-image").map(|a| a.publisher), Some("LocalImage contributors"));
         assert_eq!(by_id("local-keys").map(|a| a.publisher), Some("LocalKeys contributors"));
         assert_eq!(by_id("local-utils").map(|a| a.publisher), Some("Local Utils contributors"));
-        assert_eq!(by_id("local-player").map(|a| a.publisher), Some("LocalPlayer contributors"));
+        assert_eq!(by_id("local-player").map(|a| a.publisher), Some("Local Player RS contributors"));
+        assert_eq!(
+            by_id("localobsidian").map(|a| (a.name, a.publisher, a.repo)),
+            Some(("Local Obsidian", "Local Obsidian contributors", "Anon5T4R/Local-Obsidian"))
+        );
+        assert_eq!(by_id("localmind").map(|a| (a.name, a.publisher, a.repo)), Some(("Local Mind", "Local Mind contributors", "Anon5T4R/Local-Mind")));
     }
 }

@@ -25,6 +25,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
+      # O antivírus em tempo real escaneia cada .rlib/.o que o rustc grava: no runner efêmero só custa tempo.
+      - name: Defender sem varredura em tempo real (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Set-MpPreference -DisableRealtimeMonitoring $true
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
@@ -50,10 +55,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+      # Só a main grava o cache; branches e PRs leem o da main (não enchem a cota de 10 GB com caches
+      # de vida curta, que despejariam o cache bom).
       - uses: Swatinem/rust-cache@v2
-      - name: Fontes CJK vendored
-        shell: bash
-        run: echo "CRAFT_FONTS_DIR=$GITHUB_WORKSPACE/assets/craft-fonts" >> "$GITHUB_ENV"
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Formatação (só os membros do workspace — libs/ e assets/craft-fonts mantêm o estilo de origem)
         shell: bash
         run: cargo xtask fmt
@@ -97,6 +103,27 @@ jobs:
           cd packaging/arch
           sudo -u builder makepkg --printsrcinfo > /dev/null
           echo "PKGBUILD parseia e gera .SRCINFO"
+
+  deny:
+    name: cargo-deny (licenças, bans, fontes, advisories)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check bans licenses sources advisories
+
+  mirror:
+    name: Espelhos do local-libs
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Crates espelhadas iguais a uma versão da fonte (erro se editadas, aviso se antigas)
+        run: bash scripts/check-mirror.sh
 
   git-sources:
     name: Sem dependências git remotas

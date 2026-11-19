@@ -800,6 +800,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "craft-desktop-theme"
+version = "0.1.0"
+dependencies = [
+ "craft-platform",
+ "egui",
+]
+
+[[package]]
 name = "craft-i18n"
 version = "0.1.0"
 dependencies = [
@@ -819,6 +827,18 @@ dependencies = [
  "unicode-bidi",
  "windows-registry",
  "writeable",
+]
+
+[[package]]
+name = "craft-platform"
+version = "0.1.0"
+dependencies = [
+ "async-channel",
+ "async-io",
+ "async-process",
+ "egui",
+ "futures-lite",
+ "zbus",
 ]
 
 [[package]]
@@ -2241,6 +2261,7 @@ checksum = "11d3d7f243d5c5a8b9bb5d6dd2b1602c0cb0b9db1621bafc7ed66e35ff9fe092"
 name = "localapp"
 version = "0.1.0"
 dependencies = [
+ "craft-desktop-theme",
  "craft-i18n",
  "craft-update",
  "craft-window",
@@ -3617,9 +3638,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-webpki"
-version = "0.103.15"
+version = "0.103.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3c3cf1d8b1e7d4927e2d154c3fcb02979afb9939629c62cd9048d4f07b60ac2"
+checksum = "4443b1b6d39d7c663139942cc4558262562d2c84123bb6282ef177009ca8b281"
 dependencies = [
  "ring",
  "rustls-pki-types",
@@ -4057,7 +4078,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix 1.1.5",
  "windows-sys 0.61.2",
