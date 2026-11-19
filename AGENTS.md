@@ -38,7 +38,7 @@ valem para o app nascido.
 - `packaging/` — Windows (WiX/MSI), Linux (AppImage/deb/rpm/tar), Arch (PKGBUILD), minisign
 - `scripts/` — `nascer-app.ps1` (renomeação paramétrica do molde)
 - `xtask/` — `ci`, `fmt`, `assets`, `layers`, `version`, `ico`
-- `scripts/check-mirror.sh` — confere as crates espelhadas do `local-libs` contra a fonte (CI e `xtask ci`)
+- `scripts/check-mirror.sh` — confere as crates e os assets (`craft-fonts`) espelhados do `local-libs` contra a fonte (CI e `xtask ci`)
 
 ## Build
 ```
