@@ -22,7 +22,7 @@ no dev-notes). As origens abaixo são as dos forks que ele carrega.
 | `libs/craft-libs/crates/update` | **`Anon5T4R/local-libs`** | `HASHES.update` da fonte | **fora do sync-upstream**: fork permanente consciente. Mudança vai na fonte e replica com `scripts/sync.ps1 -Mode push`; a cópia aqui é espelho e nunca se edita in place |
 | `libs/winprint.rs` | alampy/winprint.rs (BSD-3) | `417ac3c` (+ `winprint-gdi` no rev antigo) | usado por `craft-libs/crates/print`; upstream vivo, patches genéricos vão por PR |
 | `libs/rustls-rustcrypto` | fork da suíte | — | o `craft-update` pina este fork (o upstream alpha puxa rustls-webpki 0.102 só por `alg_id`) |
-| `assets/craft-fonts` | storytold/craft-fonts | `b076417b5880bd4154bd22f00695b1d28c6bea83` | build input (`CRAFT_FONTS_DIR`); atualiza trocando a árvore inteira e o rev em `packaging/fonts.sh`, `packaging/windows/fonts.ps1` e no CI |
+| `assets/craft-fonts` | espelho do **`Anon5T4R/local-libs`** (origem histórica: storytold/craft-fonts) | árvore conferida contra a fonte pelo `check-mirror` (sem rev própria) | build input (`CRAFT_FONTS_DIR`); mudança nas fontes vai no `local-libs` (fonte única) e replica com `sync.ps1 -Asset craft-fonts` |
 
 Regra do repo: nada é lido de `C:\Dev\storytold` em build, teste ou release. As menções a
 `storytold/*` em código, docs e atribuições são referência histórica e obrigação de licença.

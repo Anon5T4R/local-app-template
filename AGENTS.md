@@ -18,7 +18,7 @@ valem para o app nascido.
 - **Never-crash:** nada de `unwrap`/`expect`/`panic!`/`unreachable!`/`todo!` fora de testes (o clippy
   barra), `unsafe` proibido. Toda entrada (caminho, arquivo, argumento) é hostil até prova em
   contrário.
-- **Commit:** ou mensagem em português, sem Co-Authored-By (o idioma é o do repo: os apps da suíte).
+- **Commit:** mensagem em português, sem Co-Authored-By (o idioma é o do repo: os apps da suíte).
 - **Release:** `cargo xtask version set X.Y.Z` **antes** de toda tag (o binário é quem reporta a versão
   ao updater) → tag `vX.Y.Z` → o Actions builda e publica. Mínimo local.
 - **Disco:** no workspace do João vale a política de `target/` do dev-notes (`MEMORY.md` §4 — limpa o que

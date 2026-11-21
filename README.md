@@ -1,9 +1,9 @@
 # local-app-template
 
-O molde executável dos apps desktop da suíte Local: Rust puro + egui forkado, CI nos 3 SOs,
-empacotamento completo, auto-update (`craft-update`), i18n, xtask, fontes — **sem domínio de app**.
-Todo app novo da suíte nasce daqui em vez de ser copiado de outro app (foi assim que o
-`craft-update` divergiu ×10).
+O molde executável dos apps desktop da suíte Local: Rust puro + egui forkado, CI em Ubuntu,
+Windows e Arch, empacotamento completo, auto-update (`craft-update`), i18n, xtask, fontes —
+**sem domínio de app**. Todo app novo da suíte nasce daqui em vez de ser copiado de outro app
+(foi assim que o `craft-update` divergiu entre os apps).
 
 Não é um template "por tipo de app". Kits de capacidade (editor-kit do Word, media-kit do player,
 vault-kit do Obsidian) nascem de app real concluído, no `local-libs`, quando houver segundo
@@ -18,9 +18,9 @@ consumidor — ver `docs/planos/plano-bibliotecas.md` (F10).
 | i18n por catálogo TSV (`craft-i18n`), 3 traduções de exemplo (pt-br, es, ja), seletor de idioma | `i18n/locales/`, `apps/localapp/src/i18n.rs`, `build.rs` |
 | Seletor nativo de arquivo assíncrono (rfd 0.17 + pollster, sem travar o frame) | `apps/localapp/src/pickers.rs` |
 | Fontes craft-fonts embutidas (CJK/árabe/hebraico/devanágari) | `assets/craft-fonts/`, `apps/localapp/src/fonts.rs`, `build.rs` |
-| CI: Ubuntu + Windows (fmt, clippy `-D warnings`, build `--locked`, testes, gates) + Arch (`makepkg --printsrcinfo`) + guardião de fontes `git+` | `.github/workflows/ci.yml` |
+| CI: jobs `check` em Ubuntu e Windows (fmt, clippy `-D warnings`, build `--locked`, testes, gates), `arch` (`makepkg --printsrcinfo`), `deny` (cargo-deny), `mirror` (espelhos do local-libs) e `git-sources` (guardião: nenhuma fonte `git+`) | `.github/workflows/ci.yml` |
 | Release por tag `v*`: MSI WiX v5 (atalho Iniciar **e** desktop), portable zip, AppImage/deb/rpm/tar, pacote Arch com `pkgver` carimbado, checksums e assinatura minisign de todos os assets | `.github/workflows/release.yml`, `packaging/` |
-| xtask: `fmt`, `assets`, `layers`, `version`, `ico` | `xtask/` |
+| xtask: `ci`, `fmt`, `assets`, `layers`, `version`, `ico` | `xtask/` |
 | Forks vendored (egui 6d518fc, winit a517b38, craft-libs, rustls-rustcrypto, winprint.rs) | `libs/` |
 | Regras do repo (deps/lock, commits, release, disco) | `AGENTS.md` |
 
@@ -44,11 +44,12 @@ decisões que só você toma.
 5. **Identidade de empacotamento**: `apps/localapp/src/suite_entry.rs` (`APP`: id, nome, tagline,
    repo), `packaging/linux/<id>.desktop` + `<id>.metainfo.xml.in`, `packaging/arch/PKGBUILD`,
    `packaging/windows/<id>.wxs` (nome, fabricante, chaves de registro), URLs em `package.ps1`,
-   `nfpm.yaml`, `Cargo.toml` (`repository`). Nota: `craft-update`'s `App::bundle_id()` devolve
-   `com.<id>.app` só para os ids que ele conhece (`localpaint`, `localphoto`) — os outros caem em
-   `ai.storyteller.<id>`. Os 10 apps convivem com isso porque instalam por MSI/pacman (o registro
-   de menu do "rodou fora do pacote" é a única rota que usa `bundle_id()`); decida se o app nascido
-   mantém `com.<id>.app` no `.desktop`/MSI (padrão da suíte) ou entra no match da crate.
+   `nfpm.yaml`, `Cargo.toml` (`repository`). Nota: veja `App::bundle_id` na crate `craft-update`
+   (espelho em `libs/craft-libs/crates/update`): devolve `com.<id>.app` para os ids que a crate
+   conhece e `ai.storyteller.<id>` para os outros — irrelevante na prática porque os apps
+   instalam por MSI/pacman (o registro de menu do "rodou fora do pacote" é a única rota que usa
+   `bundle_id()`); decida se o app nascido mantém `com.<id>.app` no `.desktop`/MSI (padrão da
+   suíte) ou entra no match da crate.
 6. **Entrada no catálogo da suíte** (o passo que o template não pode fazer por você):
    1. No repo `Anon5T4R/local-libs` (`C:\Dev\underworld\local-libs`), adicione a entrada do app em
       `crates/update/src/suite.rs` (`pub const <APP>: App = .`) **e** à lista `SUITE` (ajuste o
@@ -77,7 +78,7 @@ i18n/locales/      catálogos de tradução (context ⇥ fonte EN ⇥ tradução
 libs/              forks vendored: craft-libs, egui, winit, rustls-rustcrypto, winprint.rs
 packaging/         env.sh, fonts.sh, icons.sh, minisign.pub, linux/, arch/, windows/
 scripts/           nascer-app.ps1 (renomeação paramétrica do molde)
-xtask/             fmt, assets, layers, version, ico
+xtask/             ci, fmt, assets, layers, version, ico
 ```
 
 Onde escrever o app: `apps/localapp/src/app.rs` (`LocalApp::page`) é a página; o resto é o frame
@@ -104,8 +105,8 @@ local — builds pesados são do CI.
 
 - **Kits/capacidades** (editor, mídia, cofre): nascem no `local-libs` quando houver app real + segundo
   consumidor.
-- **`deny.toml` + job cargo-deny**: 6 dos 10 apps têm; o local-photo (base deste molde) não. O gate
-  de licença/advisory entra quando o app tiver dependências próprias para auditar.
+- **Casca da suíte** (`shell.rs` + craft-icons + craft-palette + craft-desktop-theme): o molde ainda
+  não tem — ao nascer um app, copie de um que já a tenha (keys, image, utils, player).
 - **Empacotamento macOS/FreeBSD/web**: fora do padrão atual de release da suíte; o app que precisar
   copia de um app que tenha.
 - **CLI/MCP e servidor de controle**: o local-photo tem os dois; são domínio, não esqueleto.
